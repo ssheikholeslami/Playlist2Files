@@ -1,14 +1,18 @@
 package ir.sinash.playlist2files;
 
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 
 public class MainActivity extends ActionBarActivity {
+
+    private static final int PICKFILE_RESULT_CODE = 1;
 
     public Button btnOpenPlaylist;
 
@@ -24,12 +28,29 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View v) {
 
-                //TODO Open File Dialog
+
+//                new OpenFileDialogFragment().show(getSupportFragmentManager(), "dialog-open-file" );
+
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("file/*");
+                startActivityForResult(intent, PICKFILE_RESULT_CODE);
                 
             }
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(requestCode){
+            case PICKFILE_RESULT_CODE:
+                if(resultCode==RESULT_OK){
+                    String filePath = data.getData().getPath();
+                    Toast.makeText(getApplicationContext(), filePath, Toast.LENGTH_SHORT).show();
+                }
+                break;
+
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
