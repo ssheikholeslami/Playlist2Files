@@ -32,6 +32,7 @@ public class MainActivity extends ActionBarActivity {
     public Button btnOpenPlaylist;
     private ArrayList<String> listOfFilePaths;
     private String destFolderPath;
+    private String playlistName;
 
 
     @Override
@@ -64,7 +65,26 @@ public class MainActivity extends ActionBarActivity {
                 if(resultCode==RESULT_OK){
                     String filePath = data.getData().getPath();
 
+                    StringTokenizer tokenizer = new StringTokenizer(filePath, "/");
 
+                    playlistName = "";
+
+
+                    while(tokenizer.hasMoreTokens())
+                    {
+                        playlistName = tokenizer.nextToken();
+                    }
+
+                    //m3u8 tokenizer
+
+                    tokenizer = new StringTokenizer(playlistName, ".m3u8");
+
+                    while(tokenizer.hasMoreTokens())
+                    {
+                        playlistName = tokenizer.nextToken();
+                    }
+
+                    Toast.makeText(getApplicationContext(), playlistName, Toast.LENGTH_SHORT).show();
 
 //                    Toast.makeText(getApplicationContext(), filePath, Toast.LENGTH_SHORT).show();
                     processPlaylist(filePath);
@@ -116,7 +136,9 @@ public class MainActivity extends ActionBarActivity {
         if(isExternalStorageWritable()){
 
             destFolderPath = Environment.getExternalStorageDirectory().getPath();
-            destFolderPath += "/Playlist2Files/";
+            destFolderPath += "/Playlist2Files/"+playlistName+"/";
+
+
 //            Toast.makeText(getApplicationContext(), destFolderPath, Toast.LENGTH_SHORT).show();
 
             for (int index = 0; index<listOfFilePaths.size(); index++){
