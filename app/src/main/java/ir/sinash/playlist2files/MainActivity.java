@@ -1,3 +1,10 @@
+//TODO retrieve ID3 tags and name the output accordingly
+//TODO .nomedia
+//TODO ask user for proceeding according to output size
+//TODO show copy progress bar
+//TODO support other formats beside m3u8
+//TODO "Open Output Folder Location" option after completion
+
 package ir.sinash.playlist2files;
 
 import android.content.Intent;
@@ -10,9 +17,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -30,9 +35,10 @@ public class MainActivity extends ActionBarActivity {
     private static final int PICKFILE_RESULT_CODE = 1;
 
     public Button btnOpenPlaylist;
-    private ArrayList<String> listOfFilePaths;
+    private ArrayList<String> listOfSourceFilePaths, listOfDestFilePaths;
     private String destFolderPath;
     private String playlistName;
+    private long totalOutputSize;
 
 
     @Override
@@ -97,7 +103,7 @@ public class MainActivity extends ActionBarActivity {
     private void processPlaylist(String filePath) {
 
         File playlistFile =new File(filePath);
-        listOfFilePaths = new ArrayList<String>();
+        listOfSourceFilePaths = new ArrayList<String>();
 
         try {
             BufferedReader br = new BufferedReader(new FileReader(playlistFile));
@@ -105,22 +111,22 @@ public class MainActivity extends ActionBarActivity {
 //            Toast.makeText(getApplicationContext(), playlistFile.getPath(), Toast.LENGTH_SHORT).show();
             while((line = br.readLine())!= null){
 
-                listOfFilePaths.add(line);
+                listOfSourceFilePaths.add(line);
 //                Toast.makeText(getApplicationContext(), line, Toast.LENGTH_SHORT).show();
 
             }
 
-            long totalSize = 0;
-            for(String path : listOfFilePaths){
+            totalOutputSize = 0;
+            for(String path : listOfSourceFilePaths){
 
                 File file = new File(path);
-                totalSize += file.length();
+                totalOutputSize += file.length();
 
             }
 
-            long totalSizeInKBs = totalSize/1024;
+            totalOutputSize = totalOutputSize /1048576; //in MBs
 
-//            Toast.makeText(getApplicationContext(), "Total size: " + totalSizeInKBs, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Total size: " + totalOutputSize + " MBs", Toast.LENGTH_SHORT).show();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -133,17 +139,18 @@ public class MainActivity extends ActionBarActivity {
 
 
 
-        if(isExternalStorageWritable()){
+        if(isExternalStorageWritableAndHasRequiredFreeSpace(totalOutputSize)){
 
             destFolderPath = Environment.getExternalStorageDirectory().getPath();
             destFolderPath += "/Playlist2Files/"+playlistName+"/";
+            listOfDestFilePaths = new ArrayList<String>(listOfSourceFilePaths.size());
 
 
 //            Toast.makeText(getApplicationContext(), destFolderPath, Toast.LENGTH_SHORT).show();
 
-            for (int index = 0; index<listOfFilePaths.size(); index++){
+            for (int index = 0; index< listOfSourceFilePaths.size(); index++){
 
-                String sourcePath = listOfFilePaths.get(index);
+                String sourcePath = listOfSourceFilePaths.get(index);
                 String sourceFileName = "";
 
                 StringTokenizer tokenizer = new StringTokenizer(sourcePath, "/");
@@ -164,22 +171,47 @@ public class MainActivity extends ActionBarActivity {
                 }
                 */
                 String destPath = destFolderPath+"00"+String.valueOf(index+1)+" - "+sourceFileName;
-                Toast.makeText(getApplicationContext(), destPath, Toast.LENGTH_SHORT).show();
+
+                //TODO continue right here
+                /**
+                try {
+                    copy(new File(sourcePath), new File(destPath));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                 */
+
+//                listOfDestFilePaths.add(index, destPath);
+
+//                Toast.makeText(getApplicationContext(), destPath, Toast.LENGTH_SHORT).show();
             }
+
+            Toast.makeText(getApplicationContext(), "Success! Output available in: " + destFolderPath , Toast.LENGTH_LONG).show();
+
         }
 
 
     }
 
-    public boolean isExternalStorageWritable() {
+    public boolean isExternalStorageWritableAndHasRequiredFreeSpace(long outputSize) {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
+
+            long freeSpaceMB = Environment.getExternalStorageDirectory().getFreeSpace()/1048576;
+
+            if( freeSpaceMB - outputSize > 50){  //TODO  50 -> user defined amount
+
+                return true;
+            }
+
         }
+        Toast.makeText(getApplicationContext(), "Can't write to storage: either not mounted or not enough free space." , Toast.LENGTH_LONG).show();
         return false;
     }
 
 
+    //TODO better copy method? : handle all copies in one method and close the streams after all copies
+    // but this may require using two FOR loops in the preparation phase
 
     public void copy(File src, File dst) throws IOException {
         InputStream in = new FileInputStream(src);
