@@ -4,6 +4,7 @@
 //TODO show copy progress bar
 //TODO support other formats beside m3u8
 //TODO "Open Output Folder Location" option after completion
+//TODO option to change the output folder name BEFORE starting the operations
 
 package ir.sinash.playlist2files;
 
@@ -143,6 +144,14 @@ public class MainActivity extends ActionBarActivity {
 
             destFolderPath = Environment.getExternalStorageDirectory().getPath();
             destFolderPath += "/Playlist2Files/"+playlistName+"/";
+            File folder = new File(destFolderPath);
+            if (!folder.exists()) {
+               boolean result = folder.mkdirs();
+                if(!result){
+                    Toast.makeText(getApplicationContext(), "Can't create folder!" , Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
             listOfDestFilePaths = new ArrayList<String>(listOfSourceFilePaths.size());
 
 
@@ -163,23 +172,21 @@ public class MainActivity extends ActionBarActivity {
                     sourceFileName = tokenizer.nextToken();
                 }
 
-
-                /**
-                for (String token : sourcePath.split("/")) {
-
-                    System.err.println(token);
-                }
-                */
                 String destPath = destFolderPath+"00"+String.valueOf(index+1)+" - "+sourceFileName;
 
-                //TODO continue right here
-                /**
+//                System.out.println(destPath);
+                //COPY
+
+                File sourceFile = new File(sourcePath);
+                File destFile = new File(destPath);
                 try {
-                    copy(new File(sourcePath), new File(destPath));
+                    if(destFile.createNewFile()){
+                        copy(sourceFile, destFile);
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                 */
+
 
 //                listOfDestFilePaths.add(index, destPath);
 
